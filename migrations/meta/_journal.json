@@ -1,0 +1,20 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1705859446080,
+      "tag": "0000_safe_piledriver",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1705860098908,
+      "tag": "0001_huge_shen",
+      "breakpoints": true
+    }
+  ]
+}
