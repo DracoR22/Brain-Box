@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { actionSignUpUser } from "@/lib/server-actions/auth-actions"
 import { FormSchema, SignUpFormSchema } from "@/lib/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import clsx from "clsx"
@@ -46,10 +47,16 @@ const SignupPage = () => {
     const isLoading = form.formState.isSubmitting
 
     const onSubmit = async ({ email, password }: z.infer<typeof FormSchema>) => {
-        
-    }
+        const { error } = await actionSignUpUser({ email, password })
 
-    const signUpHandler = () => {}
+        if (error) {
+            setSubmitError(error.message)
+            form.reset()
+            return
+        }
+
+        setConfirmation(true)
+    }
 
   return (
     <Form {...form}>
@@ -94,7 +101,7 @@ const SignupPage = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full p-6" disabled={isLoading}>
+            <Button type="submit" className="w-full p-6 hover:bg-indigo-500 transition" disabled={isLoading}>
               {!isLoading ? 'Create Account' : <Loader/>}
             </Button>
           </>

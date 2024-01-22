@@ -12,7 +12,7 @@ import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Loader from "@/components/global/loader"
-import { actionLoginUser } from "@/lib/server-actions/auth-action"
+import { actionLoginUser } from "@/lib/server-actions/auth-actions"
 
 const LoginPage = () => {
 
