@@ -4,6 +4,8 @@ import "./globals.css";
 import { DM_Sans } from 'next/font/google';
 import { ThemeProvider } from "@/lib/providers/next-theme-provider";
 import { twMerge } from "tailwind-merge";
+import { Toaster } from "@/components/ui/toaster";
+import AppStateProvider from "@/lib/providers/state-provider";
 
 const inter = DM_Sans({ subsets: ['latin'] });
 
@@ -21,7 +23,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={twMerge('bg-background', inter.className)}>
          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <AppStateProvider>
+           <Toaster/>
             {children}
+          </AppStateProvider>
          </ThemeProvider>
       </body>
     </html>

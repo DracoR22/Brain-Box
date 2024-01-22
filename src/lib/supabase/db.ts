@@ -20,6 +20,6 @@ const migrateDB = async () => {
     }
 }
 
-migrateDB()
+// migrateDB()
 
 export default db
