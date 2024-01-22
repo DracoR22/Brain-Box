@@ -12,6 +12,7 @@ import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Loader from "@/components/global/loader"
+import { actionLoginUser } from "@/lib/server-actions/auth-action"
 
 const LoginPage = () => {
 
@@ -31,7 +32,14 @@ const LoginPage = () => {
   const isLoading = form.formState.isSubmitting
 
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = async (formData)  => {
-     
+      const { error } = await actionLoginUser(formData)
+
+      if (error) {
+        form.reset()
+        setSubmitError(error.message)
+      }
+
+      router.replace('/dashboard')
   }
 
   return (
