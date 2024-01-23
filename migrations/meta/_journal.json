@@ -15,6 +15,27 @@
       "when": 1705860098908,
       "tag": "0001_huge_shen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1705950653822,
+      "tag": "0002_amazing_frank_castle",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1705983025568,
+      "tag": "0003_milky_corsair",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1705987846532,
+      "tag": "0004_talented_blue_shield",
+      "breakpoints": true
     }
   ]
 }

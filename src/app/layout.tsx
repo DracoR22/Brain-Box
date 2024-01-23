@@ -6,8 +6,9 @@ import { ThemeProvider } from "@/lib/providers/next-theme-provider";
 import { twMerge } from "tailwind-merge";
 import { Toaster } from "@/components/ui/toaster";
 import AppStateProvider from "@/lib/providers/state-provider";
+import { SupabaseUserProvider } from "@/lib/providers/supabase-user-provider";
 
-const inter = DM_Sans({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -24,8 +25,10 @@ export default function RootLayout({
       <body className={twMerge('bg-background', inter.className)}>
          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <AppStateProvider>
-           <Toaster/>
-            {children}
+            <SupabaseUserProvider>
+              <Toaster/>
+              {children}
+            </SupabaseUserProvider>
           </AppStateProvider>
          </ThemeProvider>
       </body>

@@ -1,15 +1,15 @@
 import { pgTable, pgEnum, uuid, timestamp, text, foreignKey, jsonb, boolean, bigint, integer } from "drizzle-orm/pg-core"
   import { sql } from "drizzle-orm"
 
-export const keyStatus = pgEnum("key_status", ['expired', 'invalid', 'valid', 'default'])
-export const keyType = pgEnum("key_type", ['stream_xchacha20', 'secretstream', 'secretbox', 'kdf', 'generichash', 'shorthash', 'auth', 'hmacsha256', 'hmacsha512', 'aead-det', 'aead-ietf'])
-export const factorType = pgEnum("factor_type", ['webauthn', 'totp'])
-export const factorStatus = pgEnum("factor_status", ['verified', 'unverified'])
-export const aalLevel = pgEnum("aal_level", ['aal3', 'aal2', 'aal1'])
-export const codeChallengeMethod = pgEnum("code_challenge_method", ['plain', 's256'])
-export const pricingType = pgEnum("pricing_type", ['recurring', 'one_time'])
-export const pricingPlanInterval = pgEnum("pricing_plan_interval", ['year', 'month', 'week', 'day'])
-export const subscriptionStatus = pgEnum("subscription_status", ['unpaid', 'past_due', 'incomplete_expired', 'incomplete', 'canceled', 'active', 'trialing'])
+export const keyStatus = pgEnum("key_status", ['default', 'valid', 'invalid', 'expired'])
+export const keyType = pgEnum("key_type", ['aead-ietf', 'aead-det', 'hmacsha512', 'hmacsha256', 'auth', 'shorthash', 'generichash', 'kdf', 'secretbox', 'secretstream', 'stream_xchacha20'])
+export const factorType = pgEnum("factor_type", ['totp', 'webauthn'])
+export const factorStatus = pgEnum("factor_status", ['unverified', 'verified'])
+export const aalLevel = pgEnum("aal_level", ['aal1', 'aal2', 'aal3'])
+export const codeChallengeMethod = pgEnum("code_challenge_method", ['s256', 'plain'])
+export const pricingType = pgEnum("pricing_type", ['one_time', 'recurring'])
+export const pricingPlanInterval = pgEnum("pricing_plan_interval", ['day', 'week', 'month', 'year'])
+export const subscriptionStatus = pgEnum("subscription_status", ['trialing', 'active', 'canceled', 'incomplete', 'incomplete_expired', 'past_due', 'unpaid'])
 
 
 export const workspaces = pgTable("workspaces", {
@@ -97,7 +97,7 @@ export const products = pgTable("products", {
 
 export const subscriptions = pgTable("subscriptions", {
 	id: text("id").primaryKey().notNull(),
-	userId: uuid("user_id").notNull().references(() => users.id),
+	userId: uuid("user_id").references(() => users.id),
 	status: subscriptionStatus("status"),
 	metadata: jsonb("metadata"),
 	priceId: text("price_id").references(() => prices.id),
@@ -111,4 +111,11 @@ export const subscriptions = pgTable("subscriptions", {
 	canceledAt: timestamp("canceled_at", { withTimezone: true, mode: 'string' }).default(sql`now()`),
 	trialStart: timestamp("trial_start", { withTimezone: true, mode: 'string' }).default(sql`now()`),
 	trialEnd: timestamp("trial_end", { withTimezone: true, mode: 'string' }).default(sql`now()`),
+});
+
+export const collaborators = pgTable("collaborators", {
+	workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" } ),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	id: uuid("id").defaultRandom(),
 });
