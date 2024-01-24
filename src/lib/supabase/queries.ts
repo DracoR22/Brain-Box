@@ -29,8 +29,16 @@ export const createFolder = async (folder: Folder) => {
    }
 }
 
-export const updateFolder = async (folder: Partial<Folder>) => {
-  
+//-----------------------------------------//UPDATE FOLDER//--------------------------------------//
+export const updateFolder = async (folder: Partial<Folder>, folderId: string) => {
+  try {
+   await db.update(folders).set(folder).where(eq(folders.id, folderId))
+
+   return {data: null, error: null}
+  } catch (error) {
+   console.log(error)
+   return {data: null, error: 'Error'}
+  }
 }
 
 //-------------------------------------//GET PRIVATE WORKSPACES//---------------------------------//
