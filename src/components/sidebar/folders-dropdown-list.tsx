@@ -7,6 +7,9 @@ import TooltipComponent from "../global/tooltip-component"
 import { PlusIcon } from "lucide-react"
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider"
 import { v4 } from "uuid"
+import { createFolder } from "@/lib/supabase/queries"
+import { useToast } from "../ui/use-toast"
+import { Accordion } from "../ui/accordion"
 
 interface FoldersDropdownListProps {
     workspaceFolders: Folder[]
@@ -15,8 +18,10 @@ interface FoldersDropdownListProps {
 
 const FoldersDropdownList = ({ workspaceFolders, workspaceId }: FoldersDropdownListProps) => {
 
-  const { state, dispatch } = useAppState()
+  const { state, dispatch, folderId } = useAppState()
   const { subscription } = useSupabaseUser()
+  const { toast } = useToast()
+
   const [folders, setFolders] = useState<Folder[]>(workspaceFolders)
 
   useEffect(() => {
@@ -43,7 +48,22 @@ const FoldersDropdownList = ({ workspaceFolders, workspaceId }: FoldersDropdownL
         workspaceId,
         bannerUrl: ''
     }
-    dispatch({})
+    dispatch({ type: 'ADD_FOLDER', payload: { workspaceId, folder: {...newFolder, files: []}}})
+
+    const { data, error } = await createFolder(newFolder)
+
+    if (error) {
+      toast({
+        title: 'Error',
+        variant: 'destructive',
+        description: 'Could not create the folder'
+      })
+     } else {
+      toast({
+        title: 'Success',
+        description: `Folder created`
+      })
+     }
   }
 
   return (
@@ -57,6 +77,14 @@ const FoldersDropdownList = ({ workspaceFolders, workspaceId }: FoldersDropdownL
              size={16} className="group-hover/title:inline-block hidden cursor-pointer hover:dark:text-white"/>
          </TooltipComponent>
       </div>
+      
+      <Accordion type="multiple" defaultValue={[folderId || '']} className="pb-20">
+            {folders.filter((folder) => !folder.inTrash).map((folder) => (
+              <div key={folder.id}>
+
+              </div>
+            ))}
+     </Accordion>
     </>
   )
 }

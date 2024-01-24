@@ -17,6 +17,22 @@ export const createWorkspace = async (workspace: workspace) => {
    }
 }
 
+//-----------------------------------------//CREATE FOLDER//--------------------------------------//
+export const createFolder = async (folder: Folder) => {
+   try {
+      const results = await db.insert(folders).values(folder)
+
+      return { data: null, error: null}
+   } catch (error) {
+      console.log(error)
+      return { data: null, error: 'Error'}
+   }
+}
+
+export const updateFolder = async (folder: Partial<Folder>) => {
+  
+}
+
 //-------------------------------------//GET PRIVATE WORKSPACES//---------------------------------//
 export const getPrivateWorkspaces = async (userId: string) => {
    if (!userId) return []
