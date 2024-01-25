@@ -110,7 +110,7 @@ body {
   background-size: 30px 30px;
 } */
 
-.ql-toolbar::-webkit-scrollbar {
+::-webkit-scrollbar {
   display: none;
 }
 

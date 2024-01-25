@@ -175,7 +175,6 @@ const appReducer = (
                   return {
                     ...folder,
                     files: [...folder.files, action.payload.file].sort(
-                        // @ts-expect-error
                       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
                     ),
                   };
@@ -297,7 +296,6 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
       if (!data) return;
       dispatch({
         type: 'SET_FILES',
-        // @ts-expect-error
         payload: { workspaceId, files: data, folderId },
       });
     };

@@ -3,7 +3,7 @@
 import { validate } from "uuid"
 import { files, folders, users, workspaces } from "../../../migrations/schema"
 import db from "./db"
-import { Folder, Subscription, User, workspace } from "./supabase.types"
+import { File, Folder, Subscription, User, workspace } from "./supabase.types"
 import { and, eq, ilike, notExists } from "drizzle-orm"
 import { collaborators } from "./schema"
 
@@ -29,6 +29,17 @@ export const createFolder = async (folder: Folder) => {
    }
 }
 
+//-------------------------------------------//CREATE FILE//--------------------------------------//
+export const createFile = async (file: File) => {
+   try {
+      await db.insert(files).values(file)
+
+      return { data: null, error: null }
+   } catch (error) {
+      return { data: null, error: 'Error' }
+   }
+}
+
 //-----------------------------------------//UPDATE FOLDER//--------------------------------------//
 export const updateFolder = async (folder: Partial<Folder>, folderId: string) => {
   try {
@@ -39,6 +50,51 @@ export const updateFolder = async (folder: Partial<Folder>, folderId: string) =>
    console.log(error)
    return {data: null, error: 'Error'}
   }
+}
+
+//-----------------------------------------//UPDATE WORKSPACE//-----------------------------------//
+export const updateWorkspace = async (workspace: Partial<workspace>, workspaceId: string) => {
+    if (!workspaceId) return
+
+    try {
+      await db.update(workspaces).set(workspace).where(eq(workspaces.id, workspaceId))
+
+      return {data: null, error: null}
+    } catch (error) {
+      console.log(error)
+      return {data: null, error: 'Error'}
+    }
+}
+
+//-------------------------------------------//UPDATE FILE//--------------------------------------//
+export const updateFile = async (file: Partial<File>, fileId: string) => {
+   try {
+      const response = await db.update(files).set(file).where(eq(files.id, fileId))
+
+      return {data: null, error: null}
+   } catch (error) {
+      console.log(error)
+      return {data: null, error: 'Error'}
+   }
+}
+
+//----------------------------------------//REMOVE COLLABORATOR//---------------------------------//
+export const removeCollaborators = async (users: User[], workspaceId: string) => {
+   const response = users.forEach(async (user: User) => {
+      const userExists = await db.query.collaborators.findFirst({
+        where: (u, { eq }) =>
+          and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId)),
+      });
+      if (userExists)
+        await db
+          .delete(collaborators)
+          .where(
+            and(
+              eq(collaborators.workspaceId, workspaceId),
+              eq(collaborators.userId, user.id)
+            )
+          );
+    });
 }
 
 //-------------------------------------//GET PRIVATE WORKSPACES//---------------------------------//
@@ -172,4 +228,11 @@ export const addCollaborators = async (users: User[], workspaceId: string) => {
 
     if (!userExists) await db.insert(collaborators).values({workspaceId, userId: user.id})
   })
+}
+
+//--------------------------------------//DELETE WORKSPACE//--------------------------------------//
+export const deleteWorkspace = async (workspaceId: string) => {
+   if (!workspaceId) return
+
+   await db.delete(workspaces).where(eq(workspaces.id, workspaceId))
 }

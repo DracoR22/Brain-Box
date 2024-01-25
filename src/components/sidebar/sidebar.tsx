@@ -38,7 +38,7 @@ const Sidebar = async ({ params, className }: SidebarProps) => {
           <NativeNavigation myWorkspaceId={params.workspaceId}/>
           <ScrollArea className="overflow-auto relative h-[450px]">
              <div className="pointer-events-none w-full absolute bottom-0 h-20 bg-gradient-to-t from-background to-transparent z-40"/>
-               <FoldersDropdownList workspaceFolders={workspaceFolderData} workspaceId={params.workspaceId}/>
+               <FoldersDropdownList workspaceFolders={workspaceFolderData || []} workspaceId={params.workspaceId}/>
           </ScrollArea>
        </div>
     </aside>

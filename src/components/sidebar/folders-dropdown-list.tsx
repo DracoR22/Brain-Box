@@ -10,6 +10,7 @@ import { v4 } from "uuid"
 import { createFolder } from "@/lib/supabase/queries"
 import { useToast } from "../ui/use-toast"
 import { Accordion } from "../ui/accordion"
+import Dropdown from "./dropdown"
 
 interface FoldersDropdownListProps {
     workspaceFolders: Folder[]
@@ -43,7 +44,7 @@ const FoldersDropdownList = ({ workspaceFolders, workspaceId }: FoldersDropdownL
         id: v4(),
         createdAt: new Date().toISOString(),
         title: 'Untitled',
-        iconId: '📄',
+        iconId: '📁',
         inTrash: null,
         workspaceId,
         bannerUrl: ''
@@ -74,15 +75,12 @@ const FoldersDropdownList = ({ workspaceFolders, workspaceId }: FoldersDropdownL
          </span>
          <TooltipComponent message="Create Folder">
             <PlusIcon onClick={addFolderHandler}
-             size={16} className="group-hover/title:inline-block hidden cursor-pointer hover:dark:text-white"/>
+             size={16} className="group-hover/title:inline-block hidden cursor-pointer mb-1 hover:dark:text-white"/>
          </TooltipComponent>
       </div>
-      
       <Accordion type="multiple" defaultValue={[folderId || '']} className="pb-20">
             {folders.filter((folder) => !folder.inTrash).map((folder) => (
-              <div key={folder.id}>
-
-              </div>
+              <Dropdown key={folder.id} title={folder.title} listType="folder" id={folder.id} iconId={folder.iconId}/>
             ))}
      </Accordion>
     </>
