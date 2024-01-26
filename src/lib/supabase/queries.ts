@@ -275,6 +275,13 @@ export const getFileDetails = async (fileId: string ) => {
    }
 }
 
+//-----------------------------------------//GET USER BY ID-//------------------------------------//
+export const findUser = async (userId: string) => {
+   const response = await db.query.users.findFirst({where: (u, { eq }) => eq(u.id, userId)})
+
+   return response
+}
+
 //------------------------------------//GET USER SUBSCRIPTION//-----------------------------------//
 export const getUserSubscriptionStatus = async (userId: string) => {
    try {
