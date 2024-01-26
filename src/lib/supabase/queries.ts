@@ -40,6 +40,18 @@ export const createFile = async (file: File) => {
    }
 }
 
+//---------------------------------------//ADD COLLABORATOR//-------------------------------------//
+export const addCollaborators = async (users: User[], workspaceId: string) => {
+   //Check if the user is already a collaborator before adding it 
+  const response = users.forEach(async (user: User) => {
+   const userExists = await db.query.collaborators.findFirst({
+      where: (u, { eq }) => and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId))
+    })
+
+    if (!userExists) await db.insert(collaborators).values({workspaceId, userId: user.id})
+  })
+}
+
 //-----------------------------------------//UPDATE FOLDER//--------------------------------------//
 export const updateFolder = async (folder: Partial<Folder>, folderId: string) => {
   try {
@@ -76,25 +88,6 @@ export const updateFile = async (file: Partial<File>, fileId: string) => {
       console.log(error)
       return {data: null, error: 'Error'}
    }
-}
-
-//----------------------------------------//REMOVE COLLABORATOR//---------------------------------//
-export const removeCollaborators = async (users: User[], workspaceId: string) => {
-   const response = users.forEach(async (user: User) => {
-      const userExists = await db.query.collaborators.findFirst({
-        where: (u, { eq }) =>
-          and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId)),
-      });
-      if (userExists)
-        await db
-          .delete(collaborators)
-          .where(
-            and(
-              eq(collaborators.workspaceId, workspaceId),
-              eq(collaborators.userId, user.id)
-            )
-          );
-    });
 }
 
 //-------------------------------------//GET PRIVATE WORKSPACES//---------------------------------//
@@ -203,6 +196,64 @@ export const getUsersFromSearch = async (email: string) => {
       return accounts
 }
 
+//------------------------------------//GET WORKSPACE DETAILS//-----------------------------------//
+export const getWorkspaceDetails = async (workspaceId: string) => {
+   const isValid = validate(workspaceId)
+   if (!isValid) {
+      return {
+      data: [],
+      error: 'Error'
+      }
+   }
+
+   try {
+     const workspace = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1) as workspace[]
+
+     return { data: workspace, error: null}
+   } catch (error) {
+      console.log(error)
+      return { data: [], error: 'Error'}
+   }
+}
+
+//--------------------------------------//GET FOLDER DETAILS//------------------------------------//
+export const getFolderDetails = async (folderId: string ) => {
+   const isValid = validate(folderId)
+   if (!isValid) {
+      return {
+      data: [],
+      error: 'Error'
+      }
+   }
+
+   try {
+      const folder = await db.select().from(folders).where(eq(folders.id, folderId)).limit(1) as Folder[]
+
+      return { data: folder, error: null}
+   } catch (error) {
+      return { data: [], error: 'Error'}
+   }
+}
+
+//----------------------------------------//GET FILE DETAILS//------------------------------------//
+export const getFileDetails = async (fileId: string ) => {
+   const isValid = validate(fileId)
+   if (!isValid) {
+      return {
+      data: [],
+      error: 'Error'
+      }
+   }
+
+   try {
+      const file = await db.select().from(files).where(eq(files.id, fileId)).limit(1) as File[]
+
+      return { data: file, error: null}
+   } catch (error) {
+      return { data: [], error: 'Error'}
+   }
+}
+
 //------------------------------------//GET USER SUBSCRIPTION//-----------------------------------//
 export const getUserSubscriptionStatus = async (userId: string) => {
    try {
@@ -218,21 +269,42 @@ export const getUserSubscriptionStatus = async (userId: string) => {
    }
 }
 
-//---------------------------------------//ADD COLLABORATOR//-------------------------------------//
-export const addCollaborators = async (users: User[], workspaceId: string) => {
-   //Check if the user is already a collaborator before adding it 
-  const response = users.forEach(async (user: User) => {
-   const userExists = await db.query.collaborators.findFirst({
-      where: (u, { eq }) => and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId))
-    })
-
-    if (!userExists) await db.insert(collaborators).values({workspaceId, userId: user.id})
-  })
-}
-
 //--------------------------------------//DELETE WORKSPACE//--------------------------------------//
 export const deleteWorkspace = async (workspaceId: string) => {
    if (!workspaceId) return
 
    await db.delete(workspaces).where(eq(workspaces.id, workspaceId))
+}
+
+//----------------------------------------//DELETE FILE//-----------------------------------------//
+export const deleteFile = async (fileId: string) => {
+   if (!fileId) return
+
+   await db.delete(files).where(eq(files.id, fileId))
+}
+
+//----------------------------------------//DELETE FOLDER//-----------------------------------------//
+export const deleteFolder = async (folderId: string) => {
+   if (!folderId) return
+
+   await db.delete(folders).where(eq(folders.id, folderId))
+}
+
+//-----------------------------------------//DELETE COLLABORATOR//---------------------------------//
+export const removeCollaborators = async (users: User[], workspaceId: string) => {
+   const response = users.forEach(async (user: User) => {
+      const userExists = await db.query.collaborators.findFirst({
+        where: (u, { eq }) =>
+          and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId)),
+      });
+      if (userExists)
+        await db
+          .delete(collaborators)
+          .where(
+            and(
+              eq(collaborators.workspaceId, workspaceId),
+              eq(collaborators.userId, user.id)
+            )
+          );
+    });
 }

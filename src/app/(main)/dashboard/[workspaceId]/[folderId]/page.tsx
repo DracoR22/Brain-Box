@@ -1,8 +1,19 @@
+import QuillEditor from "@/components/quill-editor/quill-editor"
+import { getFolderDetails } from "@/lib/supabase/queries"
+import { redirect } from "next/navigation"
 
+export const dynamic = 'force-dynamic'
 
-const FolderIdPage = () => {
+const FolderIdPage = async ({ params }: { params: { folderId: string }}) => {
+
+  const { data, error } = await getFolderDetails(params.folderId)
+
+  if (error || !data.length) redirect('/dashboard')
+
   return (
-    <div>FolderIdPage</div>
+    <div className="relative">
+      <QuillEditor dirType="folder" fileId={params.folderId} dirDetails={data[0] || {}}/>
+    </div>
   )
 }
 

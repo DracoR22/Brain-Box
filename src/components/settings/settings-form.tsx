@@ -86,12 +86,10 @@ const SettingsForm = () => {
      if (!file) return;
      const uuid = v4();
      setUploadingLogo(true);
-
-     const previousImageURL = `https://nozpbkulxfcmwrxdfhju.supabase.co/storage/v1/object/public/workspace-logos/${workspaceDetails?.logo}`
-
+    
      // Delete the previous image from the storage bucket
      if (workspaceDetails?.logo) {
-        await supabase.storage.from('workspace-logos').remove([previousImageURL]);
+        await supabase.storage.from('workspace-logos').remove([`${workspaceDetails.logo}`]);
      }
 
      const { data: data, error: error } = await supabase.storage

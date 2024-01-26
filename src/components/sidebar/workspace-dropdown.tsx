@@ -35,6 +35,7 @@ const WorkspaceDropdown = ({ privateWorkspaces, sharedWorkspaces, collaboratingW
      setIsOpen(false)
    }
 
+   // THIS IS FOR SEEING THE TITLE UPDATES IN REAL TIME
    useEffect(() => {
     const findSelectedWorkspace = state.workspaces.find((workspace) => workspace.id === defaultValue?.id)
 
