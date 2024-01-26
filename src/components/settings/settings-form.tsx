@@ -11,7 +11,7 @@ import { Briefcase, Lock, Plus, Share } from "lucide-react"
 import { Separator } from "../ui/separator"
 import { Label } from "../ui/label"
 import { Input } from "../ui/input"
-import { addCollaborators, deleteWorkspace, removeCollaborators, updateWorkspace } from "@/lib/supabase/queries"
+import { addCollaborators, deleteWorkspace, getCollaborators, removeCollaborators, updateWorkspace } from "@/lib/supabase/queries"
 import { revalidatePath } from "next/cache"
 import { v4 } from "uuid"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
@@ -20,6 +20,7 @@ import { Button } from "../ui/button"
 import { ScrollArea } from "../ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Alert, AlertDescription } from "../ui/alert"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader } from "../ui/alert-dialog"
 
 const SettingsForm = () => {
 
@@ -75,7 +76,7 @@ const SettingsForm = () => {
      if (titleTimerRef.current) clearTimeout(titleTimerRef.current)
      titleTimerRef.current = setTimeout(async () => {
       await updateWorkspace({ title: e.target.value }, workspaceId)
-      revalidatePath(`/dashboard/${workspaceId}`)
+      // revalidatePath(`/dashboard/${workspaceId}`)
     }, 500)
   }
 
@@ -108,6 +109,17 @@ const SettingsForm = () => {
     }
   }
 
+  const onClickAlertConfirm = async () => {
+     if (!workspaceId) return
+
+     if (collaborators.length > 0) {
+         await removeCollaborators(collaborators, workspaceId)
+     }
+
+     setPermissions('private')
+     setOpenAlertMessage(false)
+  }
+
   const onPermissionsChange = (val: string) => {
     if (val === 'private') {
       setOpenAlertMessage(true);
@@ -119,18 +131,17 @@ const SettingsForm = () => {
     if (showingWorkspace) setWorkspaceDetails(showingWorkspace);
   }, [workspaceId, state]);
 
-//   useEffect(() => {
-//     if (!workspaceId) return;
-//     const fetchCollaborators = async () => {
-//       const response = await getCollaborators(workspaceId);
-//       if (response.length) {
-//         setPermissions('shared');
-//         setCollaborators(response);
-//       }
-//     };
-//     fetchCollaborators();
-//   }, [workspaceId]);
-
+  useEffect(() => {
+    if (!workspaceId) return;
+    const fetchCollaborators = async () => {
+      const response = await getCollaborators(workspaceId);
+      if (response.length) {
+        setPermissions('shared');
+        setCollaborators(response);
+      }
+    };
+    fetchCollaborators();
+  }, [workspaceId]);
 
   return (
     <div className="flex gap-4 flex-col">
@@ -250,6 +261,26 @@ const SettingsForm = () => {
           </Button>
         </Alert>
       </>
+      <AlertDialog open={openAlertMessage}>
+          <AlertDialogContent> 
+            <AlertDialogHeader>
+               <AlertDialogContent>
+                 Are you sure?
+               </AlertDialogContent>
+               <AlertDescription>
+                 Changing a Shared workspace to a Private workspace will remove all collaborators permanently.
+               </AlertDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+               <AlertDialogCancel onClick={() => setOpenAlertMessage(false)}>
+                   Cancel
+               </AlertDialogCancel>
+               <AlertDialogAction onClick={onClickAlertConfirm}>
+                   Continue
+               </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

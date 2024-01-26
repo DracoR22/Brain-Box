@@ -2,12 +2,12 @@
 
 import { useAppState } from "@/lib/providers/state-provider"
 import { File, Folder, workspace } from "@/lib/supabase/supabase.types"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import 'quill/dist/quill.snow.css'
 import { files } from "@/lib/supabase/schema"
 import { Button } from "../ui/button"
-import { deleteFile, deleteFolder, updateFile, updateFolder, updateWorkspace } from "@/lib/supabase/queries"
+import { deleteFile, deleteFolder, getCollaborators, getFileDetails, getFolderDetails, getWorkspaceDetails, updateFile, updateFolder, updateWorkspace } from "@/lib/supabase/queries"
 import { usePathname, useRouter } from "next/navigation"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
@@ -16,7 +16,9 @@ import Image from "next/image"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import EmojiPicker from "../global/emoji-picker"
 import BannerUpload from "../banner-upload/banner-upload"
-import { XCircleIcon } from "lucide-react"
+import { Divide, XCircleIcon } from "lucide-react"
+import { useSocket } from "@/lib/providers/socket-provider"
+import { useSupabaseUser } from "@/lib/providers/supabase-user-provider"
 
 interface QuillEditorProps {
     dirDetails: File | Folder | workspace
@@ -28,15 +30,20 @@ const QuillEditor = ({ dirDetails, fileId, dirType }: QuillEditorProps) => {
 
    const supabase = createClientComponentClient()
    const { state, workspaceId, folderId, dispatch } = useAppState()
+   const { user } = useSupabaseUser()
    const router = useRouter()
    const pathname = usePathname()
+   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>()
+
+   // USE THE SOCKET CONTEXT
+   const { socket, isConnected } = useSocket()
 
    const [quill, setQuill] = useState<any>(null)
-   const [collaborators, setCollaborators] = useState<{ id: string; email: string; avatarUrl: string}[]>()
+   const [collaborators, setCollaborators] = useState<any[]>([]);
    const [saving, setSaving] = useState<boolean>(false)
    const [deletingBanner, setDeletingBanner] = useState<boolean>(false)
 
-   // GET DETAILS OF THE FOLDER, FILE OR WORKSPACE
+   // GET DETAILS OF THE FOLDER, FILE OR WORKSPACE. THIS GETS THE DETAILS IN REAL TIME USING THE STATE
    const details = useMemo(() => {
      let selectedDir 
 
@@ -176,6 +183,18 @@ const QuillEditor = ({ dirDetails, fileId, dirType }: QuillEditorProps) => {
     }
   }, [state, pathname, workspaceId])
 
+  // GET THE COLLABORATORS
+  useEffect(() => {
+    const fetchData = async () => {
+      const results = await getCollaborators(fileId);
+      if (results) {
+        setCollaborators(results);
+      }
+    };
+  
+    fetchData();
+  }, [fileId]);
+
   // UPDATE ICON
   const iconOnChange = async (icon: string) => {
      if (!fileId) return
@@ -196,6 +215,7 @@ const QuillEditor = ({ dirDetails, fileId, dirType }: QuillEditorProps) => {
      }
   }
 
+  // DELETE BANNER
   const deleteBanner = async () => {
     if (!fileId) return;
     setDeletingBanner(true);
@@ -230,6 +250,153 @@ const QuillEditor = ({ dirDetails, fileId, dirType }: QuillEditorProps) => {
     }
     setDeletingBanner(false);
   };
+
+  // FETCH LATEST INFO OF THE FILE DATA AND GET DATA CONTENT FROM THE DATABASE
+  useEffect(()  => {
+    if (!fileId) return
+     let selectedDir
+
+     const fetchInformation = async () => {
+      if (dirType === 'file') {
+        const { data: selectedDir, error } = await getFileDetails(fileId)
+
+        if (error || !selectedDir) {
+          return router.replace('/dashboard')
+        }
+
+        if (!selectedDir[0]) {
+          if (!workspaceId) return
+          return router.replace(`/dashboard/${workspaceId}`)
+        }
+
+        if (!workspaceId || quill === null) return
+        if (!selectedDir[0].data) return
+
+        quill.setContents(JSON.parse(selectedDir[0].data || ''))
+        dispatch({ type: 'UPDATE_FILE', payload: { file: { data: selectedDir[0].data }, fileId, folderId: selectedDir[0].folderId, workspaceId}})
+      }
+
+      if (dirType === 'folder') {
+        const { data: selectedDir, error } = await getFolderDetails(fileId)
+
+        if (error || !selectedDir) {
+          return router.replace('/dashboard')
+        }
+
+        if (!selectedDir[0]) {
+          if (!workspaceId) return
+          return router.replace(`/dashboard/${workspaceId}`)
+        }
+
+        if (!workspaceId || quill === null) return
+        if (!selectedDir[0].data) return
+
+        quill.setContents(JSON.parse(selectedDir[0].data || ''))
+        dispatch({ type: 'UPDATE_FOLDER', payload: { folder: { data: selectedDir[0].data }, folderId: fileId, workspaceId }})
+      }
+
+      if (dirType === 'workspace') {
+        const { data: selectedDir, error } = await getWorkspaceDetails(fileId);
+        if (error || !selectedDir) {
+          return router.replace('/dashboard');
+        }
+        if (!selectedDir[0] || quill === null) return;
+        if (!selectedDir[0].data) return;
+        quill.setContents(JSON.parse(selectedDir[0].data || ''));
+        dispatch({
+          type: 'UPDATE_WORKSPACE',
+          payload: {
+            workspace: { data: selectedDir[0].data },
+            workspaceId: fileId,
+          },
+        });
+      }
+     }
+
+     fetchInformation()
+  }, [fileId, workspaceId, folderId, quill, dirType])
+  
+
+  // CREATE SOCKET ROOM AND SAVE THE DATA TO THE DATABASE
+  useEffect(() => {
+     if (socket === null || quill === null || !fileId) return
+
+     socket.emit('create-room', fileId)
+  }, [socket, quill, fileId])
+
+  // SEND QUILL CHANGES TO ALL CLIENTS USING SOCKET
+  useEffect(() => {
+    if (socket === null || quill === null || !fileId || !user) return
+       // WIP cursors updates 
+       const selectionChnageHandler = () => {}
+
+       // Save changes to the database
+       const quillHandler = (delta: any, oldDelta: any, source: any) => {
+        if (source !== 'user') return
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+        setSaving(true)
+        const contents = quill.getContents()
+        const quillLength = quill.getLength()
+        saveTimerRef.current = setTimeout(async () => {
+          if (contents && quillLength !== 1 && fileId) {
+            // Save changes for the workspace
+            if (dirType === 'workspace') {
+               dispatch({ type: 'UPDATE_WORKSPACE', payload: { workspace: { data: JSON.stringify(contents)}, workspaceId: fileId }})
+              // DB call
+               await updateWorkspace({ data: JSON.stringify(contents) }, fileId)
+            }
+
+            // Save changes for the folder
+            if (dirType === 'folder') {
+              if (!workspaceId) return
+              dispatch({ type: 'UPDATE_FOLDER', payload: { folder: { data: JSON.stringify(contents)}, folderId: fileId, workspaceId}})
+              // DB call
+              await updateFolder({ data: JSON.stringify(contents) }, fileId)
+            }
+
+            // Save changes for the file
+            if (dirType === 'file') {
+              if (!workspaceId || !folderId) return
+              dispatch({ type: 'UPDATE_FILE', payload: { file: { data: JSON.stringify(contents)}, fileId, folderId, workspaceId}})
+              // DB call
+              await updateFile({ data: JSON.stringify(contents) }, fileId)
+            }
+          }
+          setSaving(false)
+        }, 850)
+
+        // Send changes to the socket
+        socket.emit('send-changes', delta, fileId)
+       }
+
+       quill.on('text-change', quillHandler)
+
+       //WIP cursors selection handler
+
+       return () => {
+         quill.off('text-change', quillHandler)
+
+         //WIP cursors
+
+         if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+       }
+  }, [socket, quill, fileId, user, details, folderId, workspaceId])
+
+  // RECEIVE CHANGES FOR ALL USERS USING OUR SOCKET
+  useEffect(() => {
+     if (quill === null || socket == null) return
+     const socketHandler = (deltas: any, id: string) => {
+        if (id === fileId) {
+          quill.updateContents(deltas)
+        }
+     }
+
+     socket.on('receive-changes', socketHandler)
+
+     return () => {
+       socket.off('receive-changes', socketHandler)
+     }
+  }, [quill, socket, fileId])
 
   return (
     <>
@@ -272,11 +439,11 @@ const QuillEditor = ({ dirDetails, fileId, dirType }: QuillEditorProps) => {
                        <Avatar className="-ml-3 bg-background border-2 flex items-center justify-center border-white h-8 w-8 rounded-full">
                          <AvatarImage src={collaborator.avatarUrl ? collaborator.avatarUrl : ''} className="rounded-full"/>
                          <AvatarFallback>
-                             {collaborator.email.substring(0, 2).toUpperCase()}
+                             {collaborator.email?.substring(0, 2).toUpperCase()}
                          </AvatarFallback>
                       </Avatar>
                     </TooltipTrigger>
-                    <TooltipContent></TooltipContent>
+                    <TooltipContent>{collaborator.email}</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                  ))}

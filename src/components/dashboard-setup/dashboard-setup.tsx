@@ -140,7 +140,7 @@ const DashboardSetup = ({ user, subscription }: DashboardSetupProps) => {
                <Label htmlFor="logo" className="text-sm text-muted-foreground">
                     Workspace Logo
                </Label>
-               <Input disabled={isLoading || subscription?.status !== 'active'} {...register('logo', { required: 'Workspace logo is required' })}
+               <Input disabled={isLoading || subscription?.status !== 'active'} {...register('logo')}
                 id="logo" type="file" accept="image/*" placeholder="Workspace Logo"/>
                 <small className="text-red-600">
                     {errors?.logo?.message?.toString()}

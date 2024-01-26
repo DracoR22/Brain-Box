@@ -36,6 +36,13 @@
       "when": 1705987846532,
       "tag": "0004_talented_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1706234870077,
+      "tag": "0005_eager_dragon_lord",
+      "breakpoints": true
     }
   ]
 }

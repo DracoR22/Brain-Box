@@ -1,11 +1,10 @@
 'use server'
 
 import { validate } from "uuid"
-import { files, folders, users, workspaces } from "../../../migrations/schema"
+import { collaborators, files, folders, users, workspaces } from "../../../migrations/schema"
 import db from "./db"
 import { File, Folder, Subscription, User, workspace } from "./supabase.types"
 import { and, eq, ilike, notExists } from "drizzle-orm"
-import { collaborators } from "./schema"
 
 //---------------------------------------//CREATE WORKSPACE//-------------------------------------//
 export const createWorkspace = async (workspace: workspace) => {
@@ -116,22 +115,23 @@ export const getCollaboratingWorkspaces = async (userId: string) => {
   if (!userId) return []
 
   // Get the workspaces that have collaborators
-  const collaboratedWorkspaces = await db.select({
-   id: workspaces.id,
-   createdAt: workspaces.createdAt,
-   workspaceOwner: workspaces.workspaceOwner,
-   title: workspaces.title,
-   iconId: workspaces.iconId,
-   data: workspaces.data,
-   inTrash: workspaces.inTrash,
-   logo: workspaces.logo,
-   bannerUrl: workspaces.bannerUrl,
-  }).from(users)
-  .innerJoin(collaborators, eq(users.id, collaborators.id))
-  .innerJoin(workspaces, eq(collaborators.workspaceId, workspaces.id))
-  .where(eq(users.id, userId)) as workspace[]
-
-  return collaboratedWorkspaces
+  const collaboratedWorkspaces = (await db
+   .select({
+     id: workspaces.id,
+     createdAt: workspaces.createdAt,
+     workspaceOwner: workspaces.workspaceOwner,
+     title: workspaces.title,
+     iconId: workspaces.iconId,
+     data: workspaces.data,
+     inTrash: workspaces.inTrash,
+     logo: workspaces.logo,
+     bannerUrl: workspaces.bannerUrl,
+   })
+   .from(users)
+   .innerJoin(collaborators, eq(users.id, collaborators.userId))
+   .innerJoin(workspaces, eq(collaborators.workspaceId, workspaces.id))
+   .where(eq(users.id, userId))) as workspace[];
+ return collaboratedWorkspaces;
 }
 
 //---------------------------------------//GET SHARED WORKSPACES//--------------------------------//
@@ -194,6 +194,27 @@ export const getUsersFromSearch = async (email: string) => {
       const accounts = await db.select().from(users).where(ilike(users.email, `${email}%`))
 
       return accounts
+}
+
+
+//-------------------------------------//GET ALL COLLABORATORS//----------------------------------//
+export const getCollaborators = async (workspaceId: string) => {
+   if (!workspaceId) return []
+
+   const results = await db.select().from(collaborators).where(eq(collaborators.workspaceId, workspaceId))
+
+   if (!results.length) return []
+
+   const userInformation: Promise<User | undefined>[] = results.map(
+      async (user) => {
+         const exists = await db.query.users.findFirst({ where: (u,{ eq }) => eq(u.id, user.userId)})
+
+         return exists
+      }
+   )
+
+   const resolvedUsers = await Promise.all(userInformation)
+   return resolvedUsers.filter(Boolean) as User[]
 }
 
 //------------------------------------//GET WORKSPACE DETAILS//-----------------------------------//

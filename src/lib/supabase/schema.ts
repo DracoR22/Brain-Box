@@ -29,7 +29,7 @@ export const folders = pgTable('folders', {
     inTrash: text('in_trash'),
     bannerUrl: text('banner_url'),
 
-    workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' })
+    workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' })
 })
 
 export const files = pgTable('files', {
@@ -44,8 +44,8 @@ export const files = pgTable('files', {
     inTrash: text('in_trash'),
     bannerUrl: text('banner_url'),
 
-    workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
-    folderId: uuid('folder_id').references(() => folders.id, { onDelete: 'cascade' })
+    workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+    folderId: uuid('folder_id').notNull().references(() => folders.id, { onDelete: 'cascade' })
 })
 
 export const subscriptions = pgTable("subscriptions", {
