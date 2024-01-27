@@ -7,7 +7,7 @@ import { User, workspace } from "@/lib/supabase/supabase.types"
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Briefcase, Lock, Plus, Share } from "lucide-react"
+import { Briefcase, CreditCard, Lock, LogOut, Plus, Share, UserIcon } from "lucide-react"
 import { Separator } from "../ui/separator"
 import { Label } from "../ui/label"
 import { Input } from "../ui/input"
@@ -21,12 +21,14 @@ import { ScrollArea } from "../ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { Alert, AlertDescription } from "../ui/alert"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader } from "../ui/alert-dialog"
+import CypressProfileIcon from "../icons/profile-icon"
+import LogoutButton from "../global/logout-button"
 
 const SettingsForm = () => {
 
   const { toast } = useToast()
   const { state, workspaceId, dispatch } = useAppState()
-  const { user } = useSupabaseUser()
+  const { user, subscription } = useSupabaseUser()
 
   const router = useRouter()
 
@@ -260,6 +262,42 @@ const SettingsForm = () => {
             Delete Workspace
           </Button>
         </Alert>
+        <p className="flex items-center gap-2 mt-6">
+           <UserIcon size={20}/> Profile
+        </p>
+        <Separator/>
+        <div className="flex items-center">
+           <Avatar>
+             <AvatarImage src={''}/>
+             <AvatarFallback>
+               <CypressProfileIcon/>
+             </AvatarFallback>
+           </Avatar>
+           <div className="flex flex-col ml-6">
+             <small className="text-muted-foreground cursor-not-allowed">
+               {user ? user.email : ''}
+             </small>
+             <Label htmlFor="profilePicture" className="text-sm text-muted-foreground">
+                  Profile Picture
+             </Label>
+             <Input name="profilePicture" type="file" accept="image/*" placeholder="Profile Picture"
+            //  onChange={onChangeProfilePicture} 
+             disabled={uploadingProfilePic}/>
+           </div>
+        </div>
+        <LogoutButton>
+           <div className="flex items-center">
+              <LogOut/>
+           </div>
+        </LogoutButton>
+        <p className="flex items-center gap-2 mt-6">
+           <CreditCard size={20}/> Billing & Plan
+        </p>
+        <Separator/>
+        <p className="text-muted-foreground">
+          You are currently on a {' '}
+          {subscription?.status === 'active' ? 'Pro' : 'Free'} Plan
+        </p>
       </>
       <AlertDialog open={openAlertMessage}>
           <AlertDialogContent> 

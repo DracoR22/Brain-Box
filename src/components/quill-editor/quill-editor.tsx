@@ -562,7 +562,7 @@ const QuillEditor = ({ dirDetails, fileId, dirType }: QuillEditorProps) => {
            </span>
         </div>
         {/* THIS IS THE QUILL EDITOR*/}
-        <div id="container" ref={wrapperRef} className="max-w-[800px]">
+        <div id="container" ref={wrapperRef} className="max-w-[800px] min-h-[800px]">
 
         </div>
       </div>
