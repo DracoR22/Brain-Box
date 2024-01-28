@@ -23,7 +23,7 @@ export const useSubscriptionModal = () => {
 
 export const SubscriptionModalProvider = ({ children, products }: {
   children: React.ReactNode;
-  products: any;
+  products: ProductWirhPrice[];
 }) => {
   const [open, setOpen] = useState(false);
 

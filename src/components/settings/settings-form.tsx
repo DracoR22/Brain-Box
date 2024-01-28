@@ -7,7 +7,7 @@ import { User, workspace } from "@/lib/supabase/supabase.types"
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Briefcase, CreditCard, Lock, LogOut, Plus, Share, UserIcon } from "lucide-react"
+import { Briefcase, CreditCard, ExternalLinkIcon, Lock, LogOut, Plus, Share, UserIcon } from "lucide-react"
 import { Separator } from "../ui/separator"
 import { Label } from "../ui/label"
 import { Input } from "../ui/input"
@@ -23,12 +23,16 @@ import { Alert, AlertDescription } from "../ui/alert"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader } from "../ui/alert-dialog"
 import CypressProfileIcon from "../icons/profile-icon"
 import LogoutButton from "../global/logout-button"
+import Link from "next/link"
+import { useSubscriptionModal } from "@/lib/providers/subscription-modal-provider"
+import { postData } from "@/lib/utils"
 
 const SettingsForm = () => {
 
   const { toast } = useToast()
   const { state, workspaceId, dispatch } = useAppState()
   const { user, subscription } = useSupabaseUser()
+  const { open, setOpen } = useSubscriptionModal()
 
   const router = useRouter()
 
@@ -40,18 +44,32 @@ const SettingsForm = () => {
   const [workspaceDetails, setWorkspaceDetails] = useState<workspace>()
   const [uploadingProfilePic, setUploadingProfilePic] = useState<boolean>(false)
   const [uploadingLogo, setUploadingLogo] = useState<boolean>(false)
+  const [loadingPortal, setLoadingPortal] = useState<boolean>(false);
 
   const titleTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   //PAYMENT PORTAL
+  const redirectToCustomerPortal = async () => {
+    setLoadingPortal(true);
+    try {
+      const { url, error } = await postData({
+        url: '/api/create-portal-link',
+      });
+      window.location.assign(url);
+    } catch (error) {
+      console.log(error);
+      setLoadingPortal(false);
+    }
+    setLoadingPortal(false);
+  };
 
   // ADD COLLABORATOR
   const addCollaborator = async (profile: User) => {
     if (!workspaceId) return;
-    // if (subscription?.status !== 'active' && collaborators.length >= 2) {
-    //   setOpen(true);
-    //   return;
-    // }
+    if (subscription?.status !== 'active' && collaborators.length >= 2) {
+      setOpen(true);
+      return;
+    }
     await addCollaborators([profile], workspaceId);
     setCollaborators([...collaborators, profile]);
   };
@@ -163,8 +181,13 @@ const SettingsForm = () => {
            Workspace Logo
         </Label>
         <Input name="workspaceLogo" type="file" accept="image/*"
-        placeholder="Workspace Logo" onChange={workspaceLogoChange} disabled={uploadingLogo}/>
+        placeholder="Workspace Logo" onChange={workspaceLogoChange} disabled={uploadingLogo || subscription?.status !== 'active'}/>
         {/* SUBSCRIPTION */}
+        {subscription?.status !== 'active' && (
+          <small className="text-muted-foreground">
+              To customize your workspace, you need to be on a Pro Plan
+          </small>
+        )}
       </div>
       <>
        <Label htmlFor="permissions">
@@ -177,8 +200,7 @@ const SettingsForm = () => {
           <SelectContent>
             <SelectGroup>
               <SelectItem value="private">
-                <div className="p-2 flex gap-4 justify-center items-center"
-                >
+                <div className="p-2 flex gap-4 justify-center items-center">
                   <Lock/>
                   <article className="text-left flex flex-col">
                     <span>Private</span>
@@ -298,6 +320,26 @@ const SettingsForm = () => {
           You are currently on a {' '}
           {subscription?.status === 'active' ? 'Pro' : 'Free'} Plan
         </p>
+        <Link href="/" target="_blank" className="text-muted-foreground flex flex-row items-center">
+           View Plans <ExternalLinkIcon size={16}/>
+        </Link>
+        {subscription?.status === 'active' ? (
+          <div>
+             <Button type="button" size={'sm'} variant={'secondary'}
+              disabled={loadingPortal} 
+              className="text-sm" 
+              onClick={redirectToCustomerPortal}>
+                 Manage Subscription
+             </Button>
+          </div>
+        ) : (
+          <div>
+             <Button type="button" size={'sm'} variant={'secondary'} className="text-sm"
+              onClick={() => setOpen(true) }>
+                Start Plan
+             </Button>
+          </div>
+        )}
       </>
       <AlertDialog open={openAlertMessage}>
           <AlertDialogContent> 

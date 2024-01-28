@@ -1,5 +1,5 @@
 import { pgTable, pgEnum, uuid, timestamp, text, foreignKey, jsonb, boolean, bigint, integer } from "drizzle-orm/pg-core"
-  import { sql } from "drizzle-orm"
+  import { relations, sql } from "drizzle-orm"
 
 export const keyStatus = pgEnum("key_status", ['default', 'valid', 'invalid', 'expired'])
 export const keyType = pgEnum("key_type", ['aead-ietf', 'aead-det', 'hmacsha512', 'hmacsha256', 'auth', 'shorthash', 'generichash', 'kdf', 'secretbox', 'secretstream', 'stream_xchacha20'])
@@ -10,6 +10,8 @@ export const codeChallengeMethod = pgEnum("code_challenge_method", ['s256', 'pla
 export const pricingType = pgEnum("pricing_type", ['one_time', 'recurring'])
 export const pricingPlanInterval = pgEnum("pricing_plan_interval", ['day', 'week', 'month', 'year'])
 export const subscriptionStatus = pgEnum("subscription_status", ['trialing', 'active', 'canceled', 'incomplete', 'incomplete_expired', 'past_due', 'unpaid'])
+export const equalityOp = pgEnum("equality_op", ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in'])
+export const action = pgEnum("action", ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'ERROR'])
 
 
 export const workspaces = pgTable("workspaces", {
@@ -119,3 +121,14 @@ export const collaborators = pgTable("collaborators", {
 	userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	id: uuid("id").defaultRandom(),
 });
+
+export const productsRelations = relations(products, ({ many }) => ({
+	prices: many(prices)
+}))
+  
+export const pricesRelations = relations(prices, ({ one }) => ({ 
+	  product: one(products, ({
+		  fields: [prices.productId],
+		  references: [products.id]
+	}))
+}))

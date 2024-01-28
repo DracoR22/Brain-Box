@@ -6,7 +6,7 @@ interface TemplateProps {
 
 const Template: React.FC<TemplateProps> = ({ children }) => {
   return (
-    <div className="h-screen p-6 flex  justify-center">
+    <div className="h-screen p-6 flex justify-center">
       {children}
     </div>
   );

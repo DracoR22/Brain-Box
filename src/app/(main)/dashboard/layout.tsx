@@ -1,4 +1,5 @@
 import { SubscriptionModalProvider } from "@/lib/providers/subscription-modal-provider"
+import { getActiveProductWithPrice } from "@/lib/supabase/queries"
 import React from "react"
 
 interface LayoutProps {
@@ -6,8 +7,10 @@ interface LayoutProps {
     params: any
 }
 
-const DashboardLayout = ({ params, children }: LayoutProps) => {
-  const products = null
+const DashboardLayout = async ({ params, children }: LayoutProps) => {
+  const { data: products, error } = await getActiveProductWithPrice()
+
+  if (error) throw new Error()
   return (
     <main className="flex overflow-hidden h-screen">
        <SubscriptionModalProvider products={products}>

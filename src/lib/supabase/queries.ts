@@ -1,7 +1,7 @@
 'use server'
 
 import { validate } from "uuid"
-import { collaborators, files, folders, users, workspaces } from "../../../migrations/schema"
+import { collaborators, files, folders, products, users, workspaces } from "../../../migrations/schema"
 import db from "./db"
 import { File, Folder, Subscription, User, workspace } from "./supabase.types"
 import { and, eq, ilike, notExists } from "drizzle-orm"
@@ -294,6 +294,25 @@ export const getUserSubscriptionStatus = async (userId: string) => {
    } catch (error) {
       console.log(error)
       return { data: null, error: `Error ${error}` }
+   }
+}
+
+//-----------------------------------------//GET PRODUCT//----------------------------------------//
+export const getActiveProductWithPrice = async () => {
+   try {
+      const res = await db.query.products.findMany({where: (pro, { eq }) => eq(pro.active, true),
+      with: {
+         prices: {
+            where: (pri, { eq }) => eq(pri.active, true)
+         }
+      }})
+
+      if (res.length) return { data: res, error: null }
+
+      return { data: [], error: null }
+   } catch (error) {
+      console.log(error)
+      return { data: [], error }
    }
 }
 

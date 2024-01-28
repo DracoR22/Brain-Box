@@ -408,6 +408,7 @@ const QuillEditor = ({ dirDetails, fileId, dirType }: QuillEditorProps) => {
         socket.emit('send-changes', delta, fileId)
        }
 
+       // Use our function to save to db
        quill.on('text-change', quillHandler)
 
        // Cursor selection handler
@@ -423,7 +424,7 @@ const QuillEditor = ({ dirDetails, fileId, dirType }: QuillEditorProps) => {
        }
   }, [socket, quill, fileId, user, details, folderId, workspaceId])
 
-  // RECEIVE CURSOR CHANGES USING OUR  SOCKET
+  // RECEIVE CURSOR CHANGES USING OUR SOCKET
   useEffect(() => {
     if (quill === null || socket === null || !fileId || !localCursors.length) return
     const socketHandler = (range: any, roomId: string, cursorId: string) => {
